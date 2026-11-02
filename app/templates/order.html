@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Order {{ order.id }}{% endblock %}
+{% block content %}
+<h2>Order {{ order.id }} <span class="badge {{ order.status }}">{{ order.status }}</span></h2>
+<table>
+  <tr><th>Product</th><th>Quantity</th><th>Unit price</th></tr>
+  {% for item in order.items %}
+  <tr><td>{{ item.name }}</td><td>{{ item.quantity }}</td><td>{{ item.unit_price }}</td></tr>
+  {% endfor %}
+</table>
+<p>Subtotal: <strong>{{ subtotal }}</strong></p>
+{% if order.coupon_code %}<p>Coupon: {{ order.coupon_code }}{% if order.discount %} (−{{ order.discount }}){% endif %}</p>{% endif %}
+
+{% if order.status == "paid" %}
+<p>Paid: <strong>{{ order.amount_paid }}</strong> <span class="muted">on {{ order.paid_at.strftime("%Y-%m-%d %H:%M UTC") }}</span></p>
+<p class="muted">Refund if cancelled now: {{ refund }}</p>
+{% else %}
+<form method="post" action="/orders/{{ order.id }}/pay">
+  <button type="submit">Pay now</button>
+</form>
+{% endif %}
+<p><a href="/">← Back to orders</a></p>
+{% endblock %}
