@@ -11,4 +11,7 @@ def subtotal(items: Iterable[OrderItem]) -> Decimal:
 
 
 def amount_due(order: Order) -> Decimal:
-    return (subtotal(order.items) - order.discount).quantize(CENT)
+    total = subtotal(order.items) + order.shipping_fee
+    if order.coupon_code:
+        total -= order.discount
+    return total.quantize(CENT)

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ email }}{% endblock %}
+{% block content %}
+<h2>Customer {{ email }}</h2>
+{% if orders %}
+<form method="post" action="/reorder">
+  <input type="hidden" name="customer_email" value="{{ email }}">
+  <button type="submit">Repeat last order</button>
+</form>
+<table>
+  <tr><th>Order</th><th>Created</th><th>Items</th><th>Subtotal</th><th>Paid</th><th>Status</th></tr>
+  {% for order, order_subtotal in orders %}
+  <tr>
+    <td><a href="/orders/{{ order.id }}">{{ order.id }}</a></td>
+    <td>{{ order.created_at.strftime("%Y-%m-%d") }}</td>
+    <td>{{ order.items | sum(attribute="quantity") }}</td>
+    <td>{{ order_subtotal }}</td>
+    <td>{{ order.amount_paid if order.amount_paid is not none else "—" }}</td>
+    <td><span class="badge {{ order.status }}">{{ order.status }}</span></td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="muted">No orders yet.</p>
+{% endif %}
+<p><a href="/">← Back to orders</a></p>
+{% endblock %}

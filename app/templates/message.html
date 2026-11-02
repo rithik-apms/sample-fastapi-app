@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{{ message }}{% endblock %}
+{% block content %}
+<h2>{{ message }}</h2>
+<p class="muted">Error {{ status_code }}</p>
+<p><a href="javascript:history.back()">← Go back</a> · <a href="/">Orders</a></p>
+{% endblock %}

@@ -1,36 +1,73 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>New order</h2>
-{% if error %}<p class="error">{{ error }}</p>{% endif %}
-<form method="post" action="/orders">
-  <table>
-    <tr><th>Product</th><th>Price</th><th>Quantity</th></tr>
-    {% for product in products %}
-    <tr>
-      <td>{{ product.name }}</td>
-      <td>{{ product.unit_price }}</td>
-      <td><input type="number" name="qty_{{ product.sku }}" min="0" max="10" value="0"></td>
-    </tr>
-    {% endfor %}
-  </table>
-  <p><label>Coupon code <input type="text" name="coupon_code" maxlength="32"></label></p>
-  <button type="submit">Create order</button>
-</form>
+<div class="card">
+  <h2>New order</h2>
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+  <form method="post" action="/orders">
+    <p><label>Customer email <input type="email" name="customer_email" required maxlength="254"></label></p>
+    <table>
+      <tr><th>Product</th><th>Price</th><th>In stock</th><th>Quantity</th></tr>
+      {% for product in products %}
+      <tr>
+        <td>{{ product.name }}</td>
+        <td>{{ product.unit_price }}</td>
+        <td>{{ product.stock }}</td>
+        <td><input type="number" name="qty_{{ product.sku }}" min="0" max="10" value="0"></td>
+      </tr>
+      {% endfor %}
+    </table>
+    <div class="row">
+      <label>Delivery
+        <select name="delivery_method">
+          <option value="standard">Standard</option>
+          <option value="express">Express</option>
+        </select>
+      </label>
+      <label>Country
+        <select name="country">
+          {% for code, name in countries.items() %}<option value="{{ code }}">{{ name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Coupon code <input type="text" name="coupon_code" maxlength="32"></label>
+    </div>
+    <button type="submit">Create order</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Buy again</h2>
+  <form method="post" action="/reorder" class="row">
+    <label>Customer email <input type="email" name="customer_email" required maxlength="254"></label>
+    <button type="submit">Repeat last order</button>
+  </form>
+</div>
 
 <h2>Orders</h2>
+<form method="get" action="/" class="row">
+  <label>Status
+    <select name="status">
+      <option value="">All</option>
+      {% for status in statuses %}<option value="{{ status }}" {% if status == filter_status %}selected{% endif %}>{{ status }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Customer email <input type="text" name="email" value="{{ filter_email }}"></label>
+  <button type="submit">Filter</button>
+</form>
 {% if orders %}
 <table>
-  <tr><th>Order</th><th>Items</th><th>Subtotal</th><th>Status</th></tr>
+  <tr><th>Order</th><th>Customer</th><th>Items</th><th>Subtotal</th><th>Created</th><th>Status</th></tr>
   {% for order, order_subtotal in orders %}
   <tr>
     <td><a href="/orders/{{ order.id }}">{{ order.id }}</a></td>
+    <td><a href="/customers/{{ order.customer_email }}">{{ order.customer_email }}</a></td>
     <td>{{ order.items | sum(attribute="quantity") }}</td>
     <td>{{ order_subtotal }}</td>
+    <td>{{ order.created_at.strftime("%Y-%m-%d") }}</td>
     <td><span class="badge {{ order.status }}">{{ order.status }}</span></td>
   </tr>
   {% endfor %}
 </table>
 {% else %}
-<p class="muted">No orders yet.</p>
+<p class="muted">No orders found.</p>
 {% endif %}
 {% endblock %}

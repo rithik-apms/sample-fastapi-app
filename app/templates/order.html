@@ -2,6 +2,8 @@
 {% block title %}Order {{ order.id }}{% endblock %}
 {% block content %}
 <h2>Order {{ order.id }} <span class="badge {{ order.status }}">{{ order.status }}</span></h2>
+<p>Customer: <a href="/customers/{{ order.customer_email }}">{{ order.customer_email }}</a>
+  <span class="muted">· placed {{ order.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</span></p>
 <table>
   <tr><th>Product</th><th>Quantity</th><th>Unit price</th></tr>
   {% for item in order.items %}
@@ -9,15 +11,21 @@
   {% endfor %}
 </table>
 <p>Subtotal: <strong>{{ subtotal }}</strong></p>
+<p>Delivery: {{ order.delivery_method | capitalize }} to {{ country_name }} ·
+  {% if order.free_shipping %}<strong>free</strong>{% else %}{{ order.shipping_fee }}{% endif %}</p>
 {% if order.coupon_code %}<p>Coupon: {{ order.coupon_code }}{% if order.discount %} (−{{ order.discount }}){% endif %}</p>{% endif %}
 
-{% if order.status == "paid" %}
+{% if order.status == "pending" %}
+<form method="post" action="/orders/{{ order.id }}/pay" class="inline"><button type="submit">Pay now</button></form>
+<form method="post" action="/orders/{{ order.id }}/cancel" class="inline"><button type="submit">Cancel order</button></form>
+{% elif order.status == "paid" %}
 <p>Paid: <strong>{{ order.amount_paid }}</strong> <span class="muted">on {{ order.paid_at.strftime("%Y-%m-%d %H:%M UTC") }}</span></p>
+<p><a href="/orders/{{ order.id }}/receipt.csv">Download receipt (CSV)</a></p>
 <p class="muted">Refund if cancelled now: {{ refund }}</p>
+<form method="post" action="/orders/{{ order.id }}/cancel"><button type="submit">Cancel and refund</button></form>
 {% else %}
-<form method="post" action="/orders/{{ order.id }}/pay">
-  <button type="submit">Pay now</button>
-</form>
+<p>Cancelled on {{ order.cancelled_at.strftime("%Y-%m-%d %H:%M UTC") }}.
+  {% if order.refund_amount is not none %}Refunded: <strong>{{ order.refund_amount }}</strong>{% endif %}</p>
 {% endif %}
 <p><a href="/">← Back to orders</a></p>
 {% endblock %}

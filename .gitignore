@@ -8,3 +8,6 @@ __pycache__/
 .ruff_cache/
 .vscode/
 .idea/
+
+# Local SQLite database
+data/

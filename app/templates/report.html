@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Sales report{% endblock %}
+{% block content %}
+<h2>Sales report</h2>
+<form method="get" action="/reports/sales" class="row">
+  <label>From <input type="date" name="start" value="{{ start }}" required></label>
+  <label>To <input type="date" name="end" value="{{ end }}" required></label>
+  <button type="submit">Show report</button>
+</form>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+{% if report %}
+<table>
+  <tr><th>Period</th><td>{{ report.start }} to {{ report.end }}</td></tr>
+  <tr><th>Paid orders</th><td>{{ report.paid_orders }}</td></tr>
+  <tr><th>Items sold</th><td>{{ report.items_sold }}</td></tr>
+  <tr><th>Revenue</th><td>{{ report.revenue }}</td></tr>
+  <tr><th>Average order value</th><td>{{ report.average_order_value }}</td></tr>
+</table>
+{% endif %}
+{% endblock %}

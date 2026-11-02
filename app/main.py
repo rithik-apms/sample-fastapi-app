@@ -7,10 +7,12 @@ from uuid import uuid4
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.config import get_settings
+from app import db
+from app.config import Settings, get_settings
 from app.logging_config import configure_logging, request_id_var, trace_id_var
 from app.routers import api, web
-from app.services.errors import InvalidOrder, OrderAlreadyPaid, OrderNotFound
+from app.seed import seed
+from app.services.errors import InvalidOrder, InvalidReportRange, OrderConflict, OrderNotFound
 from app.templating import templates
 
 logger = logging.getLogger("app")
@@ -18,21 +20,46 @@ logger = logging.getLogger("app")
 REQUEST_ID = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 TRACEPARENT = re.compile(r"^[0-9a-f]{2}-([0-9a-f]{32})-[0-9a-f]{16}-[0-9a-f]{2}$")
 
+# Expected business errors -> (HTTP status, message shown to the client)
+DOMAIN_ERRORS = {
+    OrderNotFound: (404, lambda exc: "Order not found"),
+    InvalidOrder: (400, str),
+    InvalidReportRange: (400, str),
+    OrderConflict: (409, str),
+}
+
+
+def is_api(request: Request) -> bool:
+    return request.url.path.startswith("/api/")
+
 
 def error_response(request: Request, request_id: str):
-    if request.url.path.startswith("/api/"):
+    if is_api(request):
         return JSONResponse({"detail": "Internal server error", "request_id": request_id}, status_code=500)
     return templates.TemplateResponse(request, "error.html", {"request_id": request_id}, status_code=500)
 
 
-def create_app() -> FastAPI:
-    settings = get_settings()
+async def domain_error(request: Request, exc: Exception):
+    status_code, describe = DOMAIN_ERRORS[type(exc)]
+    message = describe(exc)
+    if is_api(request):
+        return JSONResponse({"detail": message}, status_code=status_code)
+    return templates.TemplateResponse(
+        request, "message.html", {"status_code": status_code, "message": message}, status_code=status_code
+    )
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    settings = settings or get_settings()
     configure_logging(settings)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         if settings.release_sha == "unknown":
             logger.warning("RELEASE_SHA is not set; logs cannot be matched to a deployed commit")
+        db.init(settings.database_path)
+        with db.transaction() as conn:
+            seed(conn, demo=settings.seed_demo_data)
         logger.info("service started", extra={"fields": {"event": "startup"}})
         yield
 
@@ -74,17 +101,8 @@ def create_app() -> FastAPI:
             request_id_var.reset(request_token)
             trace_id_var.reset(trace_token)
 
-    @app.exception_handler(OrderNotFound)
-    async def not_found(request: Request, exc: OrderNotFound):
-        return JSONResponse({"detail": "Order not found"}, status_code=404)
-
-    @app.exception_handler(InvalidOrder)
-    async def invalid(request: Request, exc: InvalidOrder):
-        return JSONResponse({"detail": str(exc)}, status_code=400)
-
-    @app.exception_handler(OrderAlreadyPaid)
-    async def already_paid(request: Request, exc: OrderAlreadyPaid):
-        return JSONResponse({"detail": "Order is already paid"}, status_code=409)
+    for error_type in DOMAIN_ERRORS:
+        app.add_exception_handler(error_type, domain_error)
 
     @app.get("/health")
     def health() -> dict:

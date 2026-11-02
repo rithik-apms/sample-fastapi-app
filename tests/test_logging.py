@@ -36,8 +36,8 @@ def test_formatter_emits_required_fields():
 
 
 @pytest.fixture
-def failing_client():
-    app = create_app()
+def failing_client(settings):
+    app = create_app(settings)
 
     @app.get("/api/explode")
     def explode():

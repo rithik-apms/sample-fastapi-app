@@ -6,5 +6,9 @@ class InvalidOrder(Exception):
     pass
 
 
-class OrderAlreadyPaid(Exception):
+class OrderConflict(Exception):
+    pass
+
+
+class InvalidReportRange(Exception):
     pass
