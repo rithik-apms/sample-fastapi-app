@@ -62,6 +62,7 @@ def create_order(data: OrderCreate) -> Order:
                 discount = Decimal("0.00")
                 points_multiplier = value
             elif kind == "free_shipping":
+                discount = Decimal("0.00")
                 free_shipping = True
 
         shipping_fee = Decimal("0.00") if free_shipping else delivery_fee(data.delivery_method, country)

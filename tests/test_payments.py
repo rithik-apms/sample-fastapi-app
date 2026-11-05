@@ -53,3 +53,10 @@ def test_paying_when_stock_ran_out_is_rejected(client, make_order, pay):
 
 def test_paying_missing_order_returns_404(client):
     assert client.post("/api/orders/ord-9999/pay").status_code == 404
+
+
+def test_pay_order_with_free_shipping_coupon(make_order, pay):
+    paid = pay(make_order([("MUG", 2)], coupon_code="FREESHIP")["id"])
+
+    assert paid["status"] == "paid"
+    assert Decimal(paid["amount_paid"]) == Decimal("25.00")
