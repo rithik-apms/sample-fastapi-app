@@ -1,5 +1,6 @@
 """SQLite connections and schema."""
 
+import logging
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -46,6 +47,14 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 """
 
+# Data fixes run on every start; each must be safe to repeat.
+BACKFILLS = (
+    # Free-shipping orders saved before their discount was recorded as 0.00 (orders without a coupon keep NULL).
+    ("free-shipping orders given a 0.00 discount",
+     "UPDATE orders SET discount = '0.00' WHERE free_shipping = 1 AND discount IS NULL"),
+)
+
+logger = logging.getLogger("app.db")
 _database_path: Path | None = None
 
 
@@ -58,6 +67,10 @@ def init(path: str) -> None:
     try:
         conn.execute("PRAGMA journal_mode = WAL")
         conn.executescript(SCHEMA)
+        for description, statement in BACKFILLS:
+            changed = conn.execute(statement).rowcount
+            if changed:
+                logger.info(description, extra={"fields": {"event": "backfill", "rows": changed}})
     finally:
         conn.close()
 
