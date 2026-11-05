@@ -118,3 +118,14 @@ def test_filter_orders_by_status_and_email(client, make_order, pay):
 def test_missing_order_returns_404(client):
     assert client.get("/api/orders/ord-9999").status_code == 404
     assert client.get("/api/orders/not-an-id").status_code == 404
+
+
+def test_loyalty_points_without_multiplier_coupon_use_base_points(client, make_order):
+    order = make_order([("MUG", 2), ("TSHIRT", 1)])
+    expected = int(sum(float(i["unit_price"]) * i["quantity"] for i in order["items"]))
+
+    response = client.get(f"/api/orders/{order['id']}/loyalty-points")
+
+    assert response.status_code == 200
+    assert response.json() == {"order_id": order["id"], "points": expected}
+    assert expected > 0
