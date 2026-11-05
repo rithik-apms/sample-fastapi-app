@@ -1,5 +1,7 @@
 from decimal import Decimal
 
+from app import db
+
 
 def test_pay_order_without_coupon(make_order, pay):
     paid = pay(make_order([("MUG", 2)])["id"])
@@ -57,6 +59,17 @@ def test_paying_missing_order_returns_404(client):
 
 def test_pay_order_with_free_shipping_coupon(make_order, pay):
     paid = pay(make_order([("MUG", 2)], coupon_code="FREESHIP")["id"])
+
+    assert paid["status"] == "paid"
+    assert Decimal(paid["amount_paid"]) == Decimal("25.00")
+
+
+def test_free_shipping_order_saved_without_a_discount_can_be_paid(make_order, pay):
+    order = make_order([("MUG", 2)], coupon_code="FREESHIP")
+    with db.transaction() as conn:  # as orders were saved before the 0.00 discount was recorded
+        conn.execute("UPDATE orders SET discount = NULL WHERE id = ?", (int(order["id"].removeprefix("ord-")),))
+
+    paid = pay(order["id"])
 
     assert paid["status"] == "paid"
     assert Decimal(paid["amount_paid"]) == Decimal("25.00")
