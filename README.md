@@ -11,6 +11,8 @@ uv sync
 RELEASE_SHA=$(git rev-parse HEAD) ENVIRONMENT=local uv run uvicorn app.main:app --reload
 ```
 
+Without uv: `python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt`, then start it with `.venv/bin/uvicorn app.main:app --reload`.
+
 Open http://127.0.0.1:8000. API docs are at `/docs`. The database is created at `data/app.db`.
 
 ## Run with Docker
