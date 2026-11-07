@@ -50,3 +50,16 @@ def test_receipt_csv_for_paid_order(client, make_order, pay):
 def test_receipt_for_unpaid_order_is_rejected(client, make_order):
     order = make_order([("MUG", 1)])
     assert client.get(f"/api/orders/{order['id']}/receipt.csv").status_code == 409
+
+
+def test_sales_report_with_no_paid_orders_is_zero(client, make_order, today):
+    make_order([("MUG", 1)])  # pending only
+
+    response = client.get("/api/reports/sales", params={"start": today, "end": today})
+
+    assert response.status_code == 200
+    report = response.json()
+    assert report["paid_orders"] == 0
+    assert report["items_sold"] == 0
+    assert Decimal(report["revenue"]) == Decimal("0.00")
+    assert Decimal(report["average_order_value"]) == Decimal("0.00")

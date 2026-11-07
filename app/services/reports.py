@@ -1,4 +1,5 @@
 from datetime import date, datetime, time, timedelta, timezone
+from decimal import Decimal
 
 from app import db, repository
 from app.models import SalesReport
@@ -19,8 +20,8 @@ def sales_report(start: date, end: date) -> SalesReport:
     with db.read() as conn:
         orders = repository.paid_orders_between(conn, range_start, range_end)
 
-    revenue = sum(order.amount_paid for order in orders)
-    average = revenue / len(orders)
+    revenue = sum((order.amount_paid for order in orders), Decimal(0))
+    average = revenue / len(orders) if orders else Decimal(0)
     return SalesReport(
         start=start,
         end=end,
