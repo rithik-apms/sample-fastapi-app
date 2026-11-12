@@ -129,3 +129,17 @@ def test_loyalty_points_without_multiplier_coupon_use_base_points(client, make_o
     assert response.status_code == 200
     assert response.json() == {"order_id": order["id"], "points": expected}
     assert expected > 0
+
+
+def test_express_delivery_to_country_without_express_fee_is_rejected(client):
+    response = client.post(
+        "/api/orders",
+        json={
+            "customer_email": "a@example.com",
+            "items": [{"sku": "MUG", "quantity": 1}],
+            "delivery_method": "express",
+            "country": "in",
+        },
+    )
+    assert response.status_code == 400
+    assert "express" in response.json()["detail"]

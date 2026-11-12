@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from app.models import Order
+from app.services.errors import InvalidOrder
 from app.services.pricing import CENT
 
 COUNTRIES = {
@@ -32,6 +33,8 @@ FEE_PER_KG = Decimal("2.00")
 
 def delivery_fee(method: str, country: str) -> Decimal:
     fees = EXPRESS_FEES if method == "express" else STANDARD_FEES
+    if country not in fees:
+        raise InvalidOrder(f"Delivery method {method} is not available for {country}")
     return fees[country]
 
 
