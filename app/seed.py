@@ -12,7 +12,7 @@ from app.services.shipping import delivery_fee
 PRODUCTS = [
     Product(sku="MUG", name="Coffee mug", unit_price=Decimal("12.50"), weight_kg=Decimal("0.40"), stock=50),
     Product(sku="TSHIRT", name="T-shirt", unit_price=Decimal("20.00"), weight_kg=Decimal("0.25"), stock=30),
-    Product(sku="GIFTCARD", name="Gift card (e-mail delivery)", unit_price=Decimal("25.00"), stock=1000),
+    Product(sku="GIFTCARD", name="Gift card (e-mail delivery)", unit_price=Decimal("25.00"), weight_kg=Decimal("0"), stock=1000),
 ]
 
 DEMO_EMAIL = "demo@example.com"
