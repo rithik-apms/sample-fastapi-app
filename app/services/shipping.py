@@ -39,5 +39,8 @@ def delivery_fee(method: str, country: str) -> Decimal:
 
 
 def shipping_quote(order: Order) -> Decimal:
+    for item in order.items:
+        if item.weight_kg is None:
+            raise InvalidOrder(f"Cannot quote shipping: {item.name} ({item.sku}) has no weight recorded")
     weight = sum((item.weight_kg * item.quantity for item in order.items), Decimal("0"))
     return (BASE_FEE + weight * FEE_PER_KG).quantize(CENT)

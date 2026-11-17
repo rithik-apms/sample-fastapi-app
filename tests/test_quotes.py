@@ -16,3 +16,13 @@ def test_loyalty_points_with_points_promotion(client, make_order):
     points = client.get(f"/api/orders/{order['id']}/loyalty-points").json()
 
     assert points["points"] == 80
+
+
+def test_shipping_quote_reports_item_without_weight(client, make_order):
+    order = make_order([("MUG", 1), ("GIFTCARD", 1)])
+
+    response = client.get(f"/api/orders/{order['id']}/shipping-quote")
+
+    assert response.status_code == 400
+    assert "Gift card (e-mail delivery)" in response.text
+    assert "weight" in response.text
