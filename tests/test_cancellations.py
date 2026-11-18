@@ -52,3 +52,13 @@ def test_refund_quote_for_cancelled_order_is_the_refund_given(client, make_order
     refund = client.get(f"/api/orders/{order['id']}/refund-quote").json()
 
     assert Decimal(refund["refund_amount"]) == Decimal("27.99")
+
+
+def test_refund_quote_for_cancelled_pending_order_is_zero(client, make_order):
+    order = make_order([("MUG", 1)])
+    client.post(f"/api/orders/{order['id']}/cancel")
+
+    response = client.get(f"/api/orders/{order['id']}/refund-quote")
+
+    assert response.status_code == 200
+    assert Decimal(str(response.json()["refund_amount"])) == Decimal("0.00")
