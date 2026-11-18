@@ -42,3 +42,13 @@ def test_refund_quote_for_unpaid_order_is_zero(client, make_order):
     order = make_order([("MUG", 1)])
     refund = client.get(f"/api/orders/{order['id']}/refund-quote").json()
     assert Decimal(refund["refund_amount"]) == Decimal("0.00")
+
+
+def test_refund_quote_for_cancelled_order_is_the_refund_given(client, make_order, pay):
+    order = make_order([("MUG", 2)])
+    pay(order["id"])
+    client.post(f"/api/orders/{order['id']}/cancel")
+
+    refund = client.get(f"/api/orders/{order['id']}/refund-quote").json()
+
+    assert Decimal(refund["refund_amount"]) == Decimal("27.99")
