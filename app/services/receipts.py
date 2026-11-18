@@ -11,6 +11,7 @@ VAT_RATES = {
     "US": Decimal("0"),
     "DE": Decimal("0.19"),
     "FR": Decimal("0.20"),
+    "GB": Decimal("0.20"),
     "IN": Decimal("0.18"),
 }
 
