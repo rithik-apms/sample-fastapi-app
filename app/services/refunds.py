@@ -7,6 +7,8 @@ CANCELLATION_FEE = Decimal("2.00")
 
 
 def refund_quote(order: Order) -> Decimal:
-    """Amount returned to the customer if the order is cancelled now."""
+    """Amount returned to the customer if the order is cancelled now; for a cancelled order, the refund given."""
+    if order.status == "cancelled":
+        return order.refund_amount.quantize(CENT)
     paid = order.amount_paid or Decimal("0")
     return max(paid - CANCELLATION_FEE, Decimal("0")).quantize(CENT)

@@ -47,6 +47,16 @@ def test_receipt_csv_for_paid_order(client, make_order, pay):
     assert "total_paid,27.49" in response.text
 
 
+def test_receipt_shows_vat_included(client, make_order, pay):
+    order = make_order([("MUG", 1)], country="DE")
+    pay(order["id"])
+
+    response = client.get(f"/api/orders/{order['id']}/receipt.csv")
+
+    assert response.status_code == 200
+    assert "vat_included,19%,2.95" in response.text
+
+
 def test_receipt_for_unpaid_order_is_rejected(client, make_order):
     order = make_order([("MUG", 1)])
     assert client.get(f"/api/orders/{order['id']}/receipt.csv").status_code == 409
